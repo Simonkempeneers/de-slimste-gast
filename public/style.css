@@ -31,7 +31,7 @@ button { font: inherit; cursor: pointer; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--roze); outline-offset: 3px; }
 [hidden] { display: none !important; }
 
-/* Limburgse tussenzinnetjes: schuingedrukt in PT Serif, zoals het merkpaspoort vraagt */
+/* ondertitels en tussenzinnen: schuingedrukt in PT Serif */
 .zeg { font-family: var(--serif); font-style: italic; font-weight: 400; }
 
 .eyebrow {

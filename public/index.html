@@ -117,7 +117,7 @@ function showJoin(msg = "") {
   $("#main").innerHTML = `
     <section>
       <h1>De <em>Slimste</em> Gast</h1>
-      <p class="lead zeg">Hoe goed kent gij Belgisch Limburg?</p>
+      <p class="lead zeg">Hoe goed ken jij Belgisch Limburg?</p>
       <form id="join" style="display:grid;gap:12px;margin-top:auto">
         <label for="name">Jouw naam</label>
         <input id="name" type="text" maxlength="20" autocomplete="nickname" autocapitalize="words" enterkeyhint="go" required>
@@ -158,9 +158,8 @@ const views = {
     <section>
       <div class="wait">
         ${SW}
-        <h2>Dag ${esc(S.name)}, ge zit erin!</h2>
+        <h2>Dag ${esc(S.name)}, je doet mee!</h2>
         <p class="muted">Kijk naar het grote scherm. De quiz begint zo meteen.</p>
-        <p class="zeg muted">Zet u maar al gemakkelijk.</p>
       </div>
     </section>`,
 
@@ -171,7 +170,7 @@ const views = {
     <section>
       <div class="eyebrow">Vraag ${S.qIndex + 1} van ${S.total}</div>
       <h2>${esc(q.text)}</h2>
-      ${locked ? `<p class="zeg lead">Doorgegeven. Efkes wachten op de rest…</p>` : ""}
+      ${locked ? `<p class="zeg lead">Doorgegeven. Even wachten op de anderen…</p>` : ""}
       <div class="opts ${q.type === "tf" ? "tf" : ""} ${locked ? "locked" : ""}">
         ${q.options.map((o, i) => `
           <button class="opt opt-${i} ${S.myChoice === i ? "mine" : ""}" data-i="${i}" type="button" ${locked ? "disabled" : ""}>
@@ -189,7 +188,7 @@ const views = {
     <section>
       <div class="card ${ok ? "ok" : answered ? "ko" : "neutral"}">
         <span class="big">${ok ? "Juist! +100" : answered ? "Fout" : "Te laat"}</span>
-        <span class="zeg">${ok ? "Schoon zo, ge kent uw Limburg." : answered ? "Amaai, nie juist. Volgende keer beter." : "Ge waart er efkes nie bij."}</span>
+        <span class="zeg">${ok ? "Goed zo, je kent je Limburg." : answered ? "Helaas, dat klopt niet." : "Je was net te laat."}</span>
       </div>
       <div>
         <div class="eyebrow">Het juiste antwoord</div>
@@ -207,7 +206,7 @@ const views = {
     <section>
       <div class="wait">
         ${SW}
-        <h2>${S.rank === 1 ? "Ge staat aan de leiding!" : `Ge staat op plaats ${S.rank}`}</h2>
+        <h2>${S.rank === 1 ? "Je staat aan de leiding!" : `Je staat op plaats ${S.rank}`}</h2>
         <p class="muted">${S.score} punten · ${S.players} spelers</p>
         <p class="zeg muted">Kijk naar het grote scherm voor de tussenstand.</p>
       </div>
@@ -221,7 +220,7 @@ const views = {
       <h2>${esc(S.tiebreak.text)}</h2>
       <p class="muted">Bij gelijke stand wint wie er het dichtst bij zit. Decimalen mogen.</p>
       ${done
-        ? `<div class="card neutral" style="margin-top:auto"><span class="eyebrow" style="color:var(--mist)">Jouw gok</span><span class="big">${nl(S.myGuess)} ${esc(S.tiebreak.unit)}</span><span class="zeg">Spannend hé.</span></div>`
+        ? `<div class="card neutral" style="margin-top:auto"><span class="eyebrow" style="color:var(--mist)">Jouw gok</span><span class="big">${nl(S.myGuess)} ${esc(S.tiebreak.unit)}</span><span class="zeg">Spannend!</span></div>`
         : `<form id="guess" style="display:grid;gap:12px;margin-top:auto">
              <label for="g">Jouw antwoord in ${esc(S.tiebreak.unit)}</label>
              <input id="g" inputmode="decimal" autocomplete="off" placeholder="bv. 250,5" required>
@@ -241,7 +240,7 @@ const views = {
         <span class="eyebrow" style="color:var(--mist)">Het juiste antwoord</span>
         <span class="big">${nl(S.tiebreak.answer, 2)} ${esc(S.tiebreak.unit)}</span>
       </div>
-      <p class="lead">${g == null ? "Ge hebt geen gok gewaagd." : diff === 0 ? "Exact juist. Chapeau!" : `Jouw gok: ${nl(g)} m. Dat is ${nl(diff)} m ernaast.`}</p>
+      <p class="lead">${g == null ? "Je hebt geen gok gewaagd." : diff === 0 ? "Exact juist!" : `Jouw gok: ${nl(g)} m. Dat is ${nl(diff)} m ernaast.`}</p>
       <p class="zeg muted" style="margin-top:auto">De eindstand komt zo op het grote scherm.</p>
     </section>`;
   },
@@ -251,9 +250,9 @@ const views = {
       <div class="wait">
         ${SW}
         <div class="eyebrow">Eindstand</div>
-        <h2 style="font-size:34px">${S.rank === 1 ? "Gij zijt De Slimste Gast!" : `Plaats ${S.rank} van ${S.players}`}</h2>
+        <h2 style="font-size:34px">${S.rank === 1 ? "Jij bent De Slimste Gast!" : `Plaats ${S.rank} van ${S.players}`}</h2>
         <p class="lead">${S.score} punten</p>
-        <p class="zeg muted">Merci om mee te spelen. Altijd welkom in Limburg.</p>
+        <p class="zeg muted">Bedankt om mee te spelen. Altijd welkom in Limburg.</p>
       </div>
     </section>`,
 };

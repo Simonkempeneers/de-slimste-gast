@@ -52,6 +52,7 @@
   .qhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 3rem; }
   .qhead .eyebrow { color: var(--lichtgroen); font-size: 1.15rem; margin-bottom: 1rem; }
   .qtext { font-size: 3.5rem; line-height: 1.08; font-weight: 800; margin: 0; max-width: 62rem; text-wrap: balance; }
+  .qtext.long { font-size: 2.7rem; max-width: 80rem; }
   .clock { flex: none; width: 9rem; height: 9rem; position: relative; display: grid; place-items: center; }
   .clock svg { position: absolute; inset: 0; transform: rotate(-90deg); }
   .clock .n { font-size: 3.4rem; font-weight: 900; }
@@ -253,7 +254,7 @@ const views = {
     <section class="lobby">
       <div>
         <h1>De <em>Slimste</em> Gast</h1>
-        <p class="lead zeg">Hoe goed kent gij Belgisch Limburg eigenlijk?</p>
+        <p class="lead zeg">Hoe goed ken jij Belgisch Limburg?</p>
         <ol class="steps">
           <li><b>1</b>Scan de code</li>
           <li><b>2</b>Geef je naam in</li>
@@ -276,7 +277,7 @@ const views = {
   leaderboard: () => `
     <section class="board">
       <h2>Tussenstand</h2>
-      <p class="sub zeg">Na vraag ${S.qIndex + 1} van ${S.total}. ${S.qIndex + 1 < S.total ? "Ge kunt nog alle kanten op." : "Nu nog de schiftingsvraag."}</p>
+      <p class="sub zeg">Na vraag ${S.qIndex + 1} van ${S.total}. ${S.qIndex + 1 < S.total ? "Er kan nog van alles gebeuren." : "Nu nog de schiftingsvraag."}</p>
       ${rowsHtml(S.ranking.slice(0, 8))}
     </section>`,
 
@@ -310,7 +311,7 @@ const views = {
     <section class="final">
       <div class="intro">
         <h2>${r[0] ? esc(r[0].name) : "Eindstand"}</h2>
-        <p class="sub zeg">${r[0] ? "is De Slimste Gast van Limburg. Proficiat, ge kent uw provincie!" : "Er speelde niemand mee."}</p>
+        <p class="sub zeg">${r[0] ? "is De Slimste Gast van Limburg. Proficiat!" : "Er speelde niemand mee."}</p>
       </div>
       <div class="podium">${p(1, "p2")}${p(0, "p1")}${p(2, "p3")}</div>
       <div>${rowsHtml(r.slice(3, 10), 3)}</div>
@@ -325,7 +326,7 @@ function qView(revealed) {
       <div class="qhead">
         <div>
           <div class="eyebrow">Vraag ${S.qIndex + 1} van ${S.total} · ${q.type === "tf" ? "Juist of fout" : "Meerkeuze"}</div>
-          <h2 class="qtext">${esc(q.text)}</h2>
+          <h2 class="qtext ${q.text.length > 90 ? "long" : ""}">${esc(q.text)}</h2>
         </div>
         ${revealed ? "" : clockHtml()}
       </div>
@@ -340,7 +341,7 @@ function qView(revealed) {
       </div>
       ${revealed
         ? `<div class="fact"><span class="eyebrow">Weetje</span><p>${esc(q.fact)}</p></div>`
-        : `<div class="answered"><span><b id="an">0</b> van ${S.players.length} hebben geantwoord</span><span class="zeg">Efkes nadenken…</span></div>`}
+        : `<div class="answered"><span><b id="an">0</b> van ${S.players.length} hebben geantwoord</span><span class="zeg">Even nadenken…</span></div>`}
     </section>`;
 }
 
