@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d3736">
+<title>De Slimste Gast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=PT+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="/style.css">
+<style>
+  /* Spelersscherm: zandkleurig blad, bronsgroene kop, grote duimknoppen */
+  body { background: var(--zand); color: var(--brons); font-size: 16px; }
+  .wrap { min-height: 100%; display: flex; flex-direction: column; }
+  header { background: var(--brons); color: var(--zand); padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px; display: flex; align-items: center; gap: 12px; }
+  header .swatches { width: 30px; flex: none; }
+  header b { font-weight: 900; text-transform: uppercase; letter-spacing: .03em; font-size: 15px; }
+  header .me { margin-left: auto; text-align: right; font-size: 13px; color: var(--mist); line-height: 1.3; min-width: 0; }
+  header .me strong { color: var(--zand); display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46vw; }
+  .timer { height: 6px; background: var(--kalk); }
+  .timer i { display: block; height: 100%; width: 100%; background: var(--groen); transform-origin: left; }
+  main { flex: 1; padding: 22px 16px calc(env(safe-area-inset-bottom, 0px) + 24px); display: flex; flex-direction: column; gap: 18px; max-width: 560px; width: 100%; margin: 0 auto; }
+  section { display: flex; flex-direction: column; gap: 18px; flex: 1; animation: in .35s ease both; }
+  @keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  h1 { font-size: 44px; line-height: .92; font-weight: 900; text-transform: uppercase; margin: 8px 0 0; letter-spacing: -.01em; }
+  h1 em { font-style: normal; color: var(--groen); }
+  h2 { font-size: 24px; line-height: 1.18; font-weight: 800; margin: 0; text-wrap: balance; }
+  p { margin: 0; line-height: 1.45; }
+  .lead { font-size: 20px; color: var(--blauw); }
+  .eyebrow { color: var(--groen); font-size: 12px; }
+  .muted { color: var(--blauw); font-size: 15px; }
+
+  label { font-weight: 700; font-size: 15px; }
+  input[type=text], input[inputmode] { font: inherit; font-size: 22px; font-weight: 700; padding: 16px; border: 2px solid var(--brons); background: var(--wit); color: var(--brons); width: 100%; border-radius: 0; -webkit-appearance: none; }
+  .btn { border: 0; background: var(--brons); color: var(--zand); padding: 18px; font-size: 18px; font-weight: 800; width: 100%; }
+  .btn:disabled { opacity: .5; }
+  .err { color: var(--rood); font-weight: 600; min-height: 1.3em; }
+
+  .opts { display: grid; gap: 10px; margin-top: auto; }
+  .opt { border: 0; background: var(--opt); color: var(--opt-fg); text-align: left; padding: 16px; min-height: 68px; display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 12px; font-size: 18px; font-weight: 700; line-height: 1.2; transition: transform .1s, opacity .25s; }
+  .opt:active { transform: scale(.98); }
+  .opt .l { width: 40px; height: 40px; display: grid; place-items: center; font-weight: 900; font-size: 20px; background: rgb(0 0 0 / .14); }
+  .tf .opt { min-height: 96px; font-size: 24px; }
+  .opts.locked .opt { opacity: .3; }
+  .opts.locked .opt.mine { opacity: 1; box-shadow: 0 0 0 4px var(--brons); }
+
+  .card { padding: 22px 18px; display: grid; gap: 8px; }
+  .card.ok { background: var(--groen); color: var(--wit); }
+  .card.ko { background: var(--rood); color: var(--wit); }
+  .card.neutral { background: var(--brons); color: var(--zand); }
+  .card .big { font-size: 34px; font-weight: 900; line-height: 1; }
+  .card .zeg { font-size: 20px; }
+  .fact { border-left: 4px solid var(--groen); padding: 4px 0 4px 14px; font-size: 15px; color: var(--brons); }
+
+  .stat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat div { background: var(--wit); padding: 14px; }
+  .stat b { display: block; font-size: 30px; font-weight: 900; }
+  .stat span { font-size: 13px; color: var(--blauw); }
+
+  .wait { margin: auto 0; text-align: center; display: grid; gap: 14px; justify-items: center; }
+  .wait .swatches { width: 120px; animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: .55; } }
+  .net { position: fixed; left: 0; right: 0; bottom: 0; background: var(--rood); color: var(--wit); text-align: center; padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 10px); font-weight: 700; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="swatches" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <b>De Slimste Gast</b>
+    <div class="me" id="me" hidden></div>
+  </header>
+  <div class="timer" id="timer" hidden><i id="timerBar"></i></div>
+  <main id="main"></main>
+</div>
+<div class="net" id="net" hidden>Verbinding kwijt. Opnieuw verbinden…</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nl = (n, d = 0) => Number(n).toLocaleString("nl-BE", { minimumFractionDigits: d, maximumFractionDigits: 2 });
+const LETTERS = ["A", "B", "C", "D"];
+const SW = `<div class="swatches" aria-hidden="true">${"<i></i>".repeat(12)}</div>`;
+const socket = io();
+let me = null, S = null, deadline = 0, lastKey = "";
+
+const store = {
+  get() { try { return localStorage.getItem("dsg-player") || ""; } catch { return ""; } },
+  set(v) { try { v ? localStorage.setItem("dsg-player", v) : localStorage.removeItem("dsg-player"); } catch {} },
+};
+
+socket.on("connect", () => {
+  $("#net").hidden = true;
+  const id = store.get();
+  if (id) {
+    socket.emit("player:resume", id, (r) => {
+      if (r && r.ok) { me = { id, name: r.name }; }
+      else { store.set(""); me = null; showJoin(); }
+    });
+  } else if (!me) showJoin();
+});
+socket.on("disconnect", () => { $("#net").hidden = false; });
+socket.on("reset", () => { store.set(""); me = null; S = null; lastKey = ""; showJoin("De quiz werd opnieuw gestart. Geef je naam nog eens in."); });
+socket.on("pstate", (s) => {
+  S = s;
+  deadline = Date.now() + (s.remaining || 0);
+  render();
+});
+
+function showJoin(msg = "") {
+  lastKey = "join";
+  $("#me").hidden = true;
+  $("#timer").hidden = true;
+  $("#main").innerHTML = `
+    <section>
+      <h1>De <em>Slimste</em> Gast</h1>
+      <p class="lead zeg">Hoe goed kent gij Belgisch Limburg?</p>
+      <form id="join" style="display:grid;gap:12px;margin-top:auto">
+        <label for="name">Jouw naam</label>
+        <input id="name" type="text" maxlength="20" autocomplete="nickname" autocapitalize="words" enterkeyhint="go" required>
+        <button class="btn" type="submit">Doe mee</button>
+        <p class="err" id="err">${esc(msg)}</p>
+      </form>
+    </section>`;
+  $("#join").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector("button");
+    btn.disabled = true;
+    socket.emit("player:join", $("#name").value, (r) => {
+      btn.disabled = false;
+      if (r && r.ok) { me = { id: r.id, name: r.name }; store.set(r.id); }
+      else $("#err").textContent = (r && r.error) || "Dat lukte niet. Probeer opnieuw.";
+    });
+  });
+}
+
+function render() {
+  if (!S || !me) return;
+  $("#me").hidden = false;
+  $("#me").innerHTML = `<strong>${esc(S.name)}</strong>${S.score} punten`;
+  const timed = (S.phase === "question" || S.phase === "tiebreak") && S.remaining > 0;
+  $("#timer").hidden = !timed;
+
+  const key = [S.phase, S.qIndex, S.myChoice ?? "", S.myGuess ?? ""].join(":");
+  if (key === lastKey) return;
+  lastKey = key;
+  $("#main").innerHTML = (views[S.phase] || views.lobby)();
+  bind[S.phase] && bind[S.phase]();
+}
+
+const rankLine = () => S.rank ? `Plaats <b>${S.rank}</b> van ${S.players}` : "";
+
+const views = {
+  lobby: () => `
+    <section>
+      <div class="wait">
+        ${SW}
+        <h2>Dag ${esc(S.name)}, ge zit erin!</h2>
+        <p class="muted">Kijk naar het grote scherm. De quiz begint zo meteen.</p>
+        <p class="zeg muted">Zet u maar al gemakkelijk.</p>
+      </div>
+    </section>`,
+
+  question: () => {
+    const q = S.question;
+    const locked = S.myChoice != null;
+    return `
+    <section>
+      <div class="eyebrow">Vraag ${S.qIndex + 1} van ${S.total}</div>
+      <h2>${esc(q.text)}</h2>
+      ${locked ? `<p class="zeg lead">Doorgegeven. Efkes wachten op de rest…</p>` : ""}
+      <div class="opts ${q.type === "tf" ? "tf" : ""} ${locked ? "locked" : ""}">
+        ${q.options.map((o, i) => `
+          <button class="opt opt-${i} ${S.myChoice === i ? "mine" : ""}" data-i="${i}" type="button" ${locked ? "disabled" : ""}>
+            <span class="l">${q.type === "tf" ? (i === 0 ? "✓" : "✗") : LETTERS[i]}</span><span>${esc(o)}</span>
+          </button>`).join("")}
+      </div>
+    </section>`;
+  },
+
+  reveal: () => {
+    const q = S.question;
+    const answered = S.myChoice != null;
+    const ok = S.wasCorrect;
+    return `
+    <section>
+      <div class="card ${ok ? "ok" : answered ? "ko" : "neutral"}">
+        <span class="big">${ok ? "Juist! +100" : answered ? "Fout" : "Te laat"}</span>
+        <span class="zeg">${ok ? "Schoon zo, ge kent uw Limburg." : answered ? "Amaai, nie juist. Volgende keer beter." : "Ge waart er efkes nie bij."}</span>
+      </div>
+      <div>
+        <div class="eyebrow">Het juiste antwoord</div>
+        <h2 style="margin-top:6px">${esc(q.options[q.correct])}</h2>
+      </div>
+      <p class="fact">${esc(q.fact)}</p>
+      <div class="stat" style="margin-top:auto">
+        <div><b>${S.score}</b><span>punten</span></div>
+        <div><b>${S.rank ?? "–"}</b><span>plaats van ${S.players}</span></div>
+      </div>
+    </section>`;
+  },
+
+  leaderboard: () => `
+    <section>
+      <div class="wait">
+        ${SW}
+        <h2>${S.rank === 1 ? "Ge staat aan de leiding!" : `Ge staat op plaats ${S.rank}`}</h2>
+        <p class="muted">${S.score} punten · ${S.players} spelers</p>
+        <p class="zeg muted">Kijk naar het grote scherm voor de tussenstand.</p>
+      </div>
+    </section>`,
+
+  tiebreak: () => {
+    const done = S.myGuess != null;
+    return `
+    <section>
+      <div class="eyebrow" style="color:var(--rood)">Schiftingsvraag</div>
+      <h2>${esc(S.tiebreak.text)}</h2>
+      <p class="muted">Bij gelijke stand wint wie er het dichtst bij zit. Decimalen mogen.</p>
+      ${done
+        ? `<div class="card neutral" style="margin-top:auto"><span class="eyebrow" style="color:var(--mist)">Jouw gok</span><span class="big">${nl(S.myGuess)} ${esc(S.tiebreak.unit)}</span><span class="zeg">Spannend hé.</span></div>`
+        : `<form id="guess" style="display:grid;gap:12px;margin-top:auto">
+             <label for="g">Jouw antwoord in ${esc(S.tiebreak.unit)}</label>
+             <input id="g" inputmode="decimal" autocomplete="off" placeholder="bv. 250,5" required>
+             <button class="btn" type="submit">Verstuur</button>
+             <p class="err" id="gerr"></p>
+           </form>`}
+    </section>`;
+  },
+
+  tiebreakReveal: () => {
+    const g = S.myGuess;
+    const diff = g == null ? null : Math.abs(g - S.tiebreak.answer);
+    return `
+    <section>
+      <div class="eyebrow" style="color:var(--rood)">Schiftingsvraag</div>
+      <div class="card neutral">
+        <span class="eyebrow" style="color:var(--mist)">Het juiste antwoord</span>
+        <span class="big">${nl(S.tiebreak.answer, 2)} ${esc(S.tiebreak.unit)}</span>
+      </div>
+      <p class="lead">${g == null ? "Ge hebt geen gok gewaagd." : diff === 0 ? "Exact juist. Chapeau!" : `Jouw gok: ${nl(g)} m. Dat is ${nl(diff)} m ernaast.`}</p>
+      <p class="zeg muted" style="margin-top:auto">De eindstand komt zo op het grote scherm.</p>
+    </section>`;
+  },
+
+  final: () => `
+    <section>
+      <div class="wait">
+        ${SW}
+        <div class="eyebrow">Eindstand</div>
+        <h2 style="font-size:34px">${S.rank === 1 ? "Gij zijt De Slimste Gast!" : `Plaats ${S.rank} van ${S.players}`}</h2>
+        <p class="lead">${S.score} punten</p>
+        <p class="zeg muted">Merci om mee te spelen. Altijd welkom in Limburg.</p>
+      </div>
+    </section>`,
+};
+
+const bind = {
+  question() {
+    document.querySelectorAll(".opt").forEach((b) => b.addEventListener("click", () => {
+      if (S.myChoice != null) return;
+      const i = Number(b.dataset.i);
+      if (navigator.vibrate) try { navigator.vibrate(30); } catch {}
+      // meteen tonen; de server bevestigt via pstate
+      S.myChoice = i;
+      lastKey = "";
+      render();
+      socket.emit("player:answer", i);
+    }));
+  },
+  tiebreak() {
+    const f = $("#guess");
+    if (!f) return;
+    f.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = $("#g").value.trim().replace(",", ".");
+      const n = Number(v);
+      if (!v || !Number.isFinite(n) || n < 0) { $("#gerr").textContent = "Geef een getal in, bijvoorbeeld 250,5."; return; }
+      S.myGuess = Math.round(n * 100) / 100;
+      lastKey = "";
+      render();
+      socket.emit("player:guess", v);
+    });
+  },
+};
+
+(function tick() {
+  if (S && !$("#timer").hidden) {
+    const left = Math.max(0, deadline - Date.now());
+    const total = S.duration || 20000;
+    const bar = $("#timerBar");
+    bar.style.transform = `scaleX(${left / total})`;
+    bar.style.background = left < 5000 ? "var(--rood)" : "var(--groen)";
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

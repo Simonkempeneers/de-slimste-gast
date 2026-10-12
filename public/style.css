@@ -1,0 +1,74 @@
+/* De Slimste Gast — huisstijl Visit Limburg (merkpaspoort: bronsgroen als basis,
+   blauw en lichtgroen als hoofdkleuren, vlagrood en zand ondersteunend) */
+:root {
+  --brons: #1d3736;
+  --brons-2: #26494a;
+  --blauw: #245f70;
+  --groen: #549079;
+  --lichtgroen: #8db69c;
+  --mist: #adc8c6;
+  --zand: #f1efe8;
+  --kalk: #e5e7e1;
+  --rood: #ea545a;
+  --roze: #f58283;
+  --blos: #efccc0;
+  --wit: #ffffff;
+
+  --sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --serif: "PT Serif", Georgia, "Times New Roman", serif;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+.num, .big, .sc, .r, .n, .stat b { font-variant-numeric: tabular-nums; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--roze); outline-offset: 3px; }
+[hidden] { display: none !important; }
+
+/* Limburgse tussenzinnetjes: schuingedrukt in PT Serif, zoals het merkpaspoort vraagt */
+.zeg { font-family: var(--serif); font-style: italic; font-weight: 400; }
+
+.eyebrow {
+  font-size: .78em;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+/* kleurblokken uit het merkpaspoort als beeldmotief */
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+.swatches i { display: block; aspect-ratio: 1; }
+.swatches i:nth-child(1) { background: var(--mist); }
+.swatches i:nth-child(2) { background: var(--kalk); }
+.swatches i:nth-child(3) { background: var(--zand); }
+.swatches i:nth-child(4) { background: var(--blos); }
+.swatches i:nth-child(5) { background: var(--blauw); }
+.swatches i:nth-child(6) { background: var(--groen); }
+.swatches i:nth-child(7) { background: var(--wit); }
+.swatches i:nth-child(8) { background: var(--roze); }
+.swatches i:nth-child(9) { background: var(--brons-2); }
+.swatches i:nth-child(10) { background: var(--lichtgroen); }
+.swatches i:nth-child(11) { background: var(--mist); }
+.swatches i:nth-child(12) { background: var(--rood); }
+
+/* antwoordkleuren */
+.opt-0 { --opt: var(--blauw); --opt-fg: var(--wit); }
+.opt-1 { --opt: var(--groen); --opt-fg: var(--wit); }
+.opt-2 { --opt: var(--rood); --opt-fg: var(--wit); }
+.opt-3 { --opt: var(--lichtgroen); --opt-fg: var(--brons); }
+.tf .opt-0 { --opt: var(--groen); --opt-fg: var(--wit); }
+.tf .opt-1 { --opt: var(--rood); --opt-fg: var(--wit); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
