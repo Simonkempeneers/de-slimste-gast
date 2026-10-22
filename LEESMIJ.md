@@ -35,7 +35,7 @@ Op dezelfde server draait ook een poll met drie vragen. Je hoeft niets extra onl
 - **Deelnemers:** `https://<jouw-adres>/poll` (de QR-code staat op het presentatiescherm)
 - **Presentator:** `https://<jouw-adres>/poll/host` (zelfde sleutel als de quiz)
 - **Bediening:** pijltje rechts of spatie = volgende scherm, pijltje links = vorige. Wachtscherm → vraag 1 → vraag 2 → vraag 3 → overzicht.
-- **Live resultaten:** antwoorden op vraag 1 verschijnen als kaartjes, vraag 2 en 3 als balken. Deelnemers kunnen hun antwoord wijzigen zolang de vraag op het scherm staat.
+- **Live resultaten:** antwoorden op vraag 1 verschijnen als kaartjes, vraag 2 en 3 als balken. Deelnemers gaan op hun gsm in hun eigen tempo door de drie vragen, met *Vorige* en *Volgende*, en kunnen hun antwoorden altijd nog aanpassen. Jij kiest los daarvan welke resultaten op het grote scherm staan.
 - **Ongepast antwoord?** Beweeg de muis en klik op het kaartje om het te verbergen. Nog eens klikken toont het opnieuw.
 - **Resultaten bewaren:** klik op *Exporteer (CSV)* vóór je de server stopt. Het bestand opent in Excel, met één rij per deelnemer.
 - De vragen pas je aan bovenaan in `poll.js`.

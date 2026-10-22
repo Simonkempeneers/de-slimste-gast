@@ -163,8 +163,8 @@ module.exports = function poll(app, io, HOST_KEY) {
 
     socket.on("answer", (msg) => {
       if (!me || !state.people.has(me.id) || !msg) return;
-      const step = state.step;
-      if (step < 1 || step > 3 || msg.q !== QUESTIONS[step - 1].key) return; // enkel de vraag die nu op het scherm staat
+      // zodra de poll gestart is, beantwoordt iedereen de vragen in zijn eigen tempo
+      if (state.step < 1 || !QUESTIONS.some((q) => q.key === msg.q)) return;
       if (msg.q === "q1") {
         const t = clean(msg.value, QUESTIONS[0].max);
         if (!t) return;

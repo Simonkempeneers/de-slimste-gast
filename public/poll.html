@@ -30,6 +30,12 @@
   .btn.alt { background: transparent; color: var(--brons); box-shadow: inset 0 0 0 2px var(--brons); }
   .btn:disabled { opacity: .45; }
   .bottom { margin-top: auto; display: grid; gap: 10px; }
+  .nav { margin-top: auto; padding-top: 8px; display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+  .nav.solo { grid-template-columns: 1fr; }
+  .dots { display: flex; gap: 6px; justify-content: center; }
+  .dots i { width: 28px; height: 5px; background: var(--kalk); }
+  .dots i.on { background: var(--brons); }
+  .dots i.done { background: var(--lichtgroen); }
 
   .choices { display: grid; gap: 10px; }
   .choice { border: 0; text-align: left; background: var(--wit); color: var(--brons); padding: 16px; min-height: 62px; display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: center; font-size: 18px; font-weight: 700; line-height: 1.25; box-shadow: inset 0 0 0 2px var(--kalk); transition: background .15s, color .15s; }
@@ -67,114 +73,140 @@ const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const SW = `<div class="swatches" aria-hidden="true">${"<i></i>".repeat(12)}</div>`;
 const socket = io("/poll");
-let S = null, shown = -1, editing = false;
+// S = toestand van de server; cur = het scherm dat deze deelnemer zelf bekijkt (0 wachten, 1-3 vraag, 4 bedankt)
+let S = null, cur = 0, otherT;
 
 const store = {
-  get() { try { return localStorage.getItem("dsg-poll") || ""; } catch { return ""; } },
-  set(v) { try { localStorage.setItem("dsg-poll", v); } catch {} },
+  get(k) { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
 };
 
 socket.on("connect", () => {
   $("#net").hidden = true;
-  socket.emit("join", store.get(), (r) => { if (r && r.id) store.set(r.id); });
+  socket.emit("join", store.get("dsg-poll"), (r) => { if (r && r.id) store.set("dsg-poll", r.id); });
 });
 socket.on("disconnect", () => { $("#net").hidden = false; });
 socket.on("pstate", (s) => {
   const first = !S;
+  const prevStep = S ? S.step : null;
   S = s;
-  // enkel opnieuw opbouwen als de vraag wisselt, zodat typen niet onderbroken wordt
-  if (first || s.step !== shown) { shown = s.step; editing = false; render(); }
+  if (s.step === 0) { if (cur !== 0 || first) { cur = 0; store.set("dsg-poll-cur", "0"); render(); } return; }
+  // de poll is gestart: wie nog op het wachtscherm staat, gaat naar vraag 1; anders blijft iedereen waar hij was
+  if (first) { const saved = Number(store.get("dsg-poll-cur")); cur = saved >= 1 && saved <= 4 ? saved : 1; render(); }
+  else if (cur === 0) { cur = 1; render(); }
+  else if (prevStep === 0) render();
 });
 
-function send(q, value) { socket.emit("answer", { q, value }); }
+function go(n) {
+  saveDraft();
+  cur = Math.max(1, Math.min(4, n));
+  store.set("dsg-poll-cur", String(cur));
+  render();
+  window.scrollTo({ top: 0 });
+}
+
+// bewaar wat iemand typte voor hij verder klikt
+function saveDraft() {
+  if (cur === 1) {
+    const t = $("#t1");
+    if (!t) return;
+    const v = t.value.replace(/\s+/g, " ").trim();
+    if (v && v !== S.mine.q1) { S.mine.q1 = v; socket.emit("answer", { q: "q1", value: v }); }
+  }
+  if (cur === 3) { clearTimeout(otherT); sendQ3(); }
+}
+function sendQ3() { socket.emit("answer", { q: "q3", value: S.mine.q3, other: S.mine.q3other || "" }); }
+
+function dots() {
+  return `<div class="dots" aria-hidden="true">${[1, 2, 3].map((i) => `<i class="${i === cur ? "on" : i < cur ? "done" : ""}"></i>`).join("")}</div>`;
+}
+function nav() {
+  const next = cur === 3 ? "Klaar" : "Volgende vraag";
+  return `<div class="nav ${cur === 1 ? "solo" : ""}">
+    ${cur > 1 ? `<button class="btn alt" id="prev" type="button">Vorige</button>` : ""}
+    <button class="btn" id="next" type="button">${next}</button>
+  </div>`;
+}
 
 function render() {
-  $("#step").textContent = S.step >= 1 && S.step <= 3 ? `Vraag ${S.step} van 3` : "";
-  $("#main").innerHTML = views[S.step]();
-  binds[S.step] && binds[S.step]();
+  $("#step").textContent = cur >= 1 && cur <= 3 ? `Vraag ${cur} van 3` : "";
+  $("#main").innerHTML = views[cur]();
+  const p = $("#prev"), n = $("#next");
+  if (p) p.addEventListener("click", () => go(cur - 1));
+  if (n) n.addEventListener("click", () => go(cur + 1));
+  binds[cur] && binds[cur]();
 }
 
 const views = [
   () => `<section><div class="wait">${SW}<h2>Welkom!</h2><p class="muted">De poll start zo meteen. Houd het grote scherm in de gaten.</p></div></section>`,
   () => {
-    const q = S.questions[0], mine = S.mine.q1;
-    if (mine && !editing) return `
-      <section>
-        <div class="eyebrow">Vul de zin aan</div>
-        <h2>${esc(q.lead)}</h2>
-        <p class="quote">${esc(mine)}</p>
-        <div class="thanks"><b>Bedankt!</b><span>Je antwoord staat op het grote scherm.</span></div>
-        <div class="bottom"><button class="btn alt" id="edit" type="button">Wijzig mijn antwoord</button></div>
-      </section>`;
+    const q = S.questions[0], mine = S.mine.q1 || "";
     return `
       <section>
+        ${dots()}
         <div class="eyebrow">Vul de zin aan</div>
         <h2>${esc(q.lead)}</h2>
-        <form id="f1" class="bottom" style="margin-top:0">
-          <label for="t1" class="muted">Jouw antwoord, kort en krachtig</label>
-          <textarea id="t1" maxlength="${q.max}" enterkeyhint="send" placeholder="bv. onze website vernieuwen">${esc(mine || "")}</textarea>
-          <div class="counter"><span id="c1">${(mine || "").length}</span> / ${q.max}</div>
-          <button class="btn" type="submit" id="s1">Verstuur</button>
-        </form>
+        <label for="t1" class="muted">Jouw antwoord, kort en krachtig</label>
+        <textarea id="t1" maxlength="${q.max}" enterkeyhint="next" placeholder="bv. onze website vernieuwen">${esc(mine)}</textarea>
+        <div class="counter"><span id="c1">${mine.length}</span> / ${q.max}</div>
+        <p class="saved" id="saved">${mine ? "Opgeslagen. Je antwoord staat op het grote scherm." : ""}</p>
+        ${nav()}
       </section>`;
   },
   () => {
     const q = S.questions[1];
     return `
       <section>
+        ${dots()}
         <div class="eyebrow">Vul de zin aan</div>
         <h2>${esc(q.lead)}</h2>
         <div class="choices big">${q.options.map((o, i) => `
           <button class="choice radio" type="button" data-i="${i}" aria-pressed="${S.mine.q2 === i}"><span class="box">${S.mine.q2 === i ? "●" : ""}</span><span>${esc(o)}</span></button>`).join("")}
         </div>
-        <p class="saved" id="saved">${S.mine.q2 != null ? "Opgeslagen. Je kunt je keuze nog wijzigen." : ""}</p>
+        <p class="saved" id="saved">${S.mine.q2 != null ? "Opgeslagen." : ""}</p>
+        ${nav()}
       </section>`;
   },
   () => {
     const q = S.questions[2], mine = new Set(S.mine.q3);
     return `
       <section>
+        ${dots()}
         <div class="eyebrow">Vul de zin aan · meerdere antwoorden mogelijk</div>
         <h2>${esc(q.lead)}</h2>
         <div class="choices">${q.options.map((o, i) => `
           <button class="choice" type="button" data-i="${i}" aria-pressed="${mine.has(i)}"><span class="box">${mine.has(i) ? "✓" : ""}</span><span>${i === q.other ? "Andere, namelijk…" : esc(o)}</span></button>
           ${i === q.other ? `<input class="other-in" id="other" type="text" maxlength="${q.otherMax}" placeholder="Typ hier je thema" value="${esc(S.mine.q3other || "")}" ${mine.has(i) ? "" : "hidden"} enterkeyhint="done">` : ""}`).join("")}
         </div>
-        <p class="saved" id="saved">${mine.size ? "Opgeslagen. Je kunt je keuzes nog wijzigen." : "Tik op alles wat je interesseert."}</p>
+        <p class="saved" id="saved">${mine.size ? "Opgeslagen." : "Tik op alles wat je interesseert."}</p>
+        ${nav()}
       </section>`;
   },
-  () => `<section><div class="wait">${SW}<h2>Bedankt en tot binnenkort in Limburg.</h2></div></section>`,
+  () => `
+    <section>
+      <div class="wait">${SW}<h2>Bedankt en tot binnenkort in Limburg.</h2></div>
+      <div class="nav solo"><button class="btn alt" id="prev" type="button">Terug naar mijn antwoorden</button></div>
+    </section>`,
 ];
-
-function sendQ3() { socket.emit("answer", { q: "q3", value: S.mine.q3, other: S.mine.q3other || "" }); }
-let otherT;
 
 const binds = [
   null,
   () => {
-    const edit = $("#edit");
-    if (edit) { edit.addEventListener("click", () => { editing = true; render(); $("#t1").focus(); }); return; }
     const t = $("#t1");
     t.addEventListener("input", () => { $("#c1").textContent = t.value.length; });
-    t.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#f1").requestSubmit(); } });
-    $("#f1").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const v = t.value.replace(/\s+/g, " ").trim();
-      if (!v) { t.focus(); return; }
-      send("q1", v);
-      S.mine.q1 = v; editing = false; render();
-    });
+    t.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); go(2); } });
+    t.addEventListener("blur", () => { saveDraft(); if (S.mine.q1) $("#saved").textContent = "Opgeslagen. Je antwoord staat op het grote scherm."; });
   },
   () => {
     document.querySelectorAll(".choice").forEach((b) => b.addEventListener("click", () => {
       const i = Number(b.dataset.i);
       S.mine.q2 = i;
-      send("q2", i);
+      socket.emit("answer", { q: "q2", value: i });
       document.querySelectorAll(".choice").forEach((c) => {
         const on = Number(c.dataset.i) === i;
         c.setAttribute("aria-pressed", on); c.querySelector(".box").textContent = on ? "●" : "";
       });
-      $("#saved").textContent = "Opgeslagen. Je kunt je keuze nog wijzigen.";
+      $("#saved").textContent = "Opgeslagen.";
     }));
   },
   () => {
@@ -185,19 +217,20 @@ const binds = [
       S.mine.q3 = [...set];
       sendQ3();
       const on = set.has(i);
-      if (i === S.questions[2].other) { const o = $("#other"); o.hidden = !on; if (on) o.focus(); }
       b.setAttribute("aria-pressed", on); b.querySelector(".box").textContent = on ? "✓" : "";
-      $("#saved").textContent = set.size ? "Opgeslagen. Je kunt je keuzes nog wijzigen." : "Tik op alles wat je interesseert.";
+      if (i === S.questions[2].other) { const o = $("#other"); o.hidden = !on; if (on) o.focus(); }
+      $("#saved").textContent = set.size ? "Opgeslagen." : "Tik op alles wat je interesseert.";
     }));
     const o = $("#other");
     o.addEventListener("input", () => {
       S.mine.q3other = o.value;
       clearTimeout(otherT);
-      otherT = setTimeout(() => { sendQ3(); $("#saved").textContent = "Opgeslagen. Je kunt je keuzes nog wijzigen."; }, 500);
+      otherT = setTimeout(() => { sendQ3(); $("#saved").textContent = "Opgeslagen."; }, 500);
     });
     o.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); o.blur(); } });
     o.addEventListener("blur", () => { clearTimeout(otherT); sendQ3(); });
   },
+  null,
 ];
 </script>
 </body>
