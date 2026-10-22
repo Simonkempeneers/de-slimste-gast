@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gastenpoll · Presentator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=PT+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="/style.css">
+<style>
+  /* Presentatiescherm poll: zelfde bronsgroen vlak als de quiz; antwoorden als zandkleurige kaartjes, keuzes als balken */
+  html { font-size: min(1.12vw, 2vh); }
+  body { background: var(--brons); color: var(--zand); overflow: hidden; }
+  .app { height: 100%; display: grid; grid-template-rows: auto 1fr; padding: 2.2rem 3rem; gap: 1.6rem; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+  .mark { display: flex; align-items: center; gap: 1rem; }
+  .mark .swatches { width: 2.6rem; }
+  .mark b { font-weight: 900; font-size: 1.35rem; letter-spacing: .02em; text-transform: uppercase; }
+  .mark span { color: var(--mist); font-size: 1rem; }
+  .status { display: flex; align-items: center; gap: 1.6rem; color: var(--mist); font-size: 1.1rem; }
+  .steps { display: flex; gap: .35rem; }
+  .steps i { width: 2.4rem; height: .45rem; background: var(--brons-2); }
+  .steps i.done { background: var(--lichtgroen); }
+  .steps i.now { background: var(--rood); }
+  .mini-qr { background: var(--wit); padding: .35rem; width: 5.4rem; height: 5.4rem; }
+  .mini-qr img { width: 100%; height: 100%; display: block; }
+
+  main { position: relative; min-height: 0; }
+  section { position: absolute; inset: 0; display: flex; flex-direction: column; animation: in .45s ease both; }
+  @keyframes in { from { opacity: 0; transform: translateY(.8rem); } to { opacity: 1; transform: none; } }
+  .eyebrow { color: var(--lichtgroen); font-size: 1.15rem; margin-bottom: 1rem; }
+  .qtext { font-size: 3.6rem; line-height: 1.08; font-weight: 800; margin: 0; max-width: 70rem; text-wrap: balance; }
+  .count { font-size: 1.25rem; color: var(--mist); margin-top: 1rem; }
+  .count b { color: var(--zand); font-size: 1.5rem; }
+
+  /* wachtscherm */
+  .lobby { display: grid; grid-template-columns: 1.3fr 1fr; gap: 4rem; align-items: center; }
+  .lobby h1 { font-size: 6.6rem; line-height: .9; font-weight: 900; text-transform: uppercase; margin: 0 0 1.6rem; text-wrap: balance; }
+  .lobby h1 em { font-style: normal; color: var(--lichtgroen); }
+  .lobby .lead { font-size: 2rem; color: var(--blos); margin: 0 0 2rem; }
+  .lobby ol { margin: 0; padding: 0; list-style: none; display: grid; gap: .9rem; font-size: 1.6rem; color: var(--zand); }
+  .lobby ol li { display: grid; grid-template-columns: 2.6rem 1fr; gap: 1rem; align-items: baseline; }
+  .lobby ol b { color: var(--lichtgroen); font-weight: 900; }
+  .qr { background: var(--wit); color: var(--brons); padding: 1.8rem; display: grid; gap: 1rem; justify-items: center; max-width: 30rem; justify-self: end; }
+  .qr img { width: 100%; aspect-ratio: 1; display: block; }
+  .qr .url { font-weight: 700; font-size: 1.3rem; word-break: break-all; text-align: center; }
+
+  /* vraag 1: muur van antwoorden */
+  .wall { margin-top: 1.6rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; align-content: start; align-items: start; overflow: hidden; flex: 1; min-height: 0; }
+  .wall.many { grid-template-columns: repeat(4, 1fr); }
+  .wall .empty { grid-column: 1 / -1; }
+  .card { break-inside: avoid; background: var(--zand); color: var(--brons); padding: .7em .9em; font-size: var(--cs, 1.45rem); line-height: 1.3; font-weight: 600; animation: pop .45s ease both; cursor: pointer; position: relative; }
+  .card:nth-child(3n+2) { background: var(--mist); }
+  .card:nth-child(3n) { background: var(--blos); }
+  .card:nth-child(5n) { background: var(--lichtgroen); }
+  .card.hid { display: none; }
+  body.mouse .card.hid { display: block; opacity: .3; text-decoration: line-through; }
+  body.mouse .card:hover::after { content: "klik om te verbergen"; position: absolute; right: .6rem; bottom: .4rem; font-size: .8rem; font-weight: 700; color: var(--rood); }
+  body.mouse .card.hid:hover::after { content: "klik om te tonen"; }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+  .empty { font-size: 1.7rem; color: var(--mist); margin-top: 2rem; }
+
+  /* vraag 2 en 3: balken */
+  .bars { margin-top: auto; display: grid; gap: .9rem; }
+  #bars3 { gap: .45rem; }
+  .others { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .8rem; margin-left: 31.4rem; max-height: 4.6rem; overflow: hidden; }
+  .others span { background: var(--brons-2); color: var(--zand); padding: .3rem .7rem; font-size: 1.1rem; font-weight: 600; }
+  .others b { color: var(--mist); font-size: 1.1rem; font-weight: 600; padding: .3rem 0; }
+  #bars3 .bar .track { height: 2.2rem; }
+  #bars3 .bar .lbl { font-size: 1.45rem; }
+  #bars3 .bar .val { font-size: 1.6rem; display: flex; align-items: baseline; gap: .5rem; }
+  #bars3 .bar .val small { display: inline; }
+  .qtext.sm { font-size: 2.9rem; }
+  .bar { display: grid; grid-template-columns: 30rem 1fr 7.5rem; align-items: center; gap: 1.4rem; }
+  .bar .lbl { font-size: 1.7rem; font-weight: 700; text-align: right; }
+  .bar .track { height: 3.4rem; background: var(--brons-2); position: relative; }
+  .bar .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--lichtgroen); transition: width .7s ease; }
+  .bar .val { font-size: 2rem; font-weight: 900; }
+  .bar .val small { display: block; font-size: 1rem; font-weight: 500; color: var(--mist); }
+  .big .bar { grid-template-columns: 14rem 1fr 9rem; }
+  .big .bar .track { height: 7rem; }
+  .big .bar .lbl { font-size: 3rem; font-weight: 900; }
+  .big .bar .val { font-size: 3rem; }
+  .big .bar:nth-child(1) .fill { background: var(--groen); }
+  .big .bar:nth-child(2) .fill { background: var(--rood); }
+  .big .bar:nth-child(3) .fill { background: var(--mist); }
+  .bar.top .fill { background: var(--rood); }
+  .bar.top .lbl { color: var(--zand); }
+
+  /* overzicht */
+  .summary { display: grid; grid-template-columns: 1.15fr 1fr 1.15fr; gap: 1.4rem; margin-top: 2rem; flex: 1; min-height: 0; }
+  .panel { background: var(--brons-2); padding: 1.6rem; display: flex; flex-direction: column; gap: 1rem; min-height: 0; overflow: hidden; }
+  .panel h3 { margin: 0; font-size: 1.45rem; line-height: 1.25; font-weight: 800; color: var(--zand); }
+  .panel .eyebrow { margin: 0; font-size: .95rem; }
+  .panel ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .55rem; }
+  .panel li { font-size: 1.25rem; line-height: 1.3; }
+  .panel .quote { background: var(--brons); padding: .7rem .9rem; }
+  .srow { display: grid; grid-template-columns: 1fr auto; gap: .4rem 1rem; align-items: baseline; }
+  .srow .t { height: .6rem; grid-column: 1 / -1; background: var(--brons); position: relative; }
+  .srow .t i { position: absolute; inset: 0 auto 0 0; background: var(--lichtgroen); }
+  .srow b { font-size: 1.3rem; }
+
+  .ctrl { position: fixed; right: 1.2rem; bottom: 1.2rem; display: flex; gap: .6rem; align-items: center; opacity: 0; transition: opacity .3s; z-index: 5; }
+  .ctrl:hover, .ctrl:focus-within, body.mouse .ctrl { opacity: 1; }
+  body:not(.mouse) { cursor: none; }
+  .ctrl button, .ctrl a { border: 0; padding: .8rem 1.3rem; font-weight: 700; font-size: 1rem; background: var(--zand); color: var(--brons); text-decoration: none; }
+  .ctrl .ghost { background: var(--brons-2); color: var(--zand); }
+  .ctrl .danger { background: var(--rood); color: var(--wit); }
+  .ctrl .hint { font-size: .9rem; color: var(--mist); }
+  .net { position: fixed; left: 1.2rem; bottom: 1.2rem; font-size: .95rem; color: var(--roze); }
+  .auth { position: fixed; inset: 0; background: var(--brons); display: grid; place-items: center; z-index: 10; cursor: auto; }
+  .auth form { display: grid; gap: 1rem; width: min(26rem, 90vw); font-size: 16px; }
+  .auth h1 { margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase; }
+  .auth input { font: inherit; font-size: 18px; padding: 14px; border: 0; background: var(--zand); color: var(--brons); }
+  .auth button { border: 0; padding: 14px; font-weight: 800; background: var(--lichtgroen); color: var(--brons); font-size: 16px; }
+  .auth .err { color: var(--roze); min-height: 1.2em; margin: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="mark">
+      <div class="swatches" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div><b>Gastenpoll</b><br><span>Visit Limburg</span></div>
+    </div>
+    <div class="status">
+      <div class="steps" id="steps"></div>
+      <div id="online">0 verbonden</div>
+      <div class="mini-qr" id="miniQr" hidden><img alt="QR-code naar de poll" id="miniQrImg"></div>
+    </div>
+  </header>
+  <main id="stage"></main>
+</div>
+
+<div class="ctrl">
+  <span class="hint">← → om te wisselen</span>
+  <a class="ghost" id="export" href="#" target="_blank" rel="noopener">Exporteer (CSV)</a>
+  <button class="ghost" id="btnReset" type="button">Wis alle antwoorden</button>
+  <button class="ghost" id="btnPrev" type="button">Vorige</button>
+  <button id="btnNext" type="button">Start de poll</button>
+</div>
+<div class="net" id="net" hidden>Verbinding met de server verbroken. Opnieuw verbinden…</div>
+
+<div class="auth" id="auth" hidden>
+  <form id="authForm">
+    <h1>Gastenpoll</h1>
+    <label for="key">Presentatorsleutel</label>
+    <input id="key" type="password" autocomplete="current-password" required>
+    <button type="submit">Open het presentatiescherm</button>
+    <p class="err" id="authErr"></p>
+  </form>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const socket = io("/poll");
+const POLL_URL = location.origin + "/poll";
+const QR = "/qr.svg?u=" + encodeURIComponent(POLL_URL);
+let S = null, lastStep = -1, KEY = "", resetArmed = 0;
+
+function getKey() {
+  const q = new URLSearchParams(location.search).get("key");
+  if (q) return q;
+  try { return localStorage.getItem("dsg-host-key") || ""; } catch { return ""; }
+}
+function auth(key) {
+  socket.emit("host:auth", key, (r) => {
+    if (r && r.ok) {
+      KEY = key;
+      try { localStorage.setItem("dsg-host-key", key); } catch {}
+      $("#auth").hidden = true;
+      $("#export").href = "/poll/export.csv?key=" + encodeURIComponent(key);
+    } else {
+      $("#auth").hidden = false;
+      $("#authErr").textContent = key ? "Die sleutel klopt niet." : "";
+      $("#key").focus();
+    }
+  });
+}
+socket.on("connect", () => { $("#net").hidden = true; auth(getKey()); });
+socket.on("disconnect", () => { $("#net").hidden = false; });
+$("#authForm").addEventListener("submit", (e) => { e.preventDefault(); auth($("#key").value.trim()); });
+socket.on("state", (s) => { S = s; render(); });
+
+const go = (d) => { if (S) socket.emit("host:go", Math.max(0, Math.min(4, S.step + d))); };
+$("#btnNext").addEventListener("click", () => go(1));
+$("#btnPrev").addEventListener("click", () => go(-1));
+$("#btnReset").addEventListener("click", () => {
+  const b = $("#btnReset");
+  if (Date.now() - resetArmed < 4000) { socket.emit("host:reset"); resetArmed = 0; b.textContent = "Wis alle antwoorden"; b.className = "ghost"; return; }
+  resetArmed = Date.now(); b.textContent = "Zeker? Klik nog eens"; b.className = "danger";
+  setTimeout(() => { if (resetArmed && Date.now() - resetArmed >= 4000) { resetArmed = 0; b.textContent = "Wis alle antwoorden"; b.className = "ghost"; } }, 4100);
+});
+document.addEventListener("keydown", (e) => {
+  if (!$("#auth").hidden || e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+  if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); go(1); }
+  if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); go(-1); }
+});
+let mouseT;
+document.addEventListener("mousemove", () => {
+  document.body.classList.add("mouse");
+  clearTimeout(mouseT);
+  mouseT = setTimeout(() => document.body.classList.remove("mouse"), 2500);
+});
+$("#stage").addEventListener("click", (e) => {
+  const c = e.target.closest(".card");
+  if (c && document.body.classList.contains("mouse")) socket.emit("host:hide", c.dataset.id);
+});
+
+const nextLabel = ["Start de poll", "Volgende vraag", "Volgende vraag", "Toon het overzicht", "Einde"];
+const pct = (n, d) => (d ? Math.round((n / d) * 100) : 0);
+
+function render() {
+  if (!S) return;
+  $("#steps").innerHTML = [1, 2, 3].map((i) => `<i class="${S.step > i ? "done" : S.step === i ? "now" : ""}"></i>`).join("");
+  $("#online").textContent = `${S.online} ${S.online === 1 ? "gsm" : "gsm's"} verbonden`;
+  $("#btnNext").textContent = nextLabel[S.step];
+  $("#btnNext").disabled = S.step === 4;
+  $("#btnPrev").disabled = S.step === 0;
+  $("#miniQr").hidden = S.step === 0;
+  $("#miniQrImg").src = QR;
+
+  if (S.step !== lastStep) {
+    lastStep = S.step;
+    $("#stage").innerHTML = views[S.step]();
+  }
+  updates[S.step] && updates[S.step]();
+}
+
+const views = [
+  () => `
+    <section class="lobby">
+      <div>
+        <h1>Vul de <em>zin</em> aan</h1>
+        <p class="lead zeg">Drie korte vragen. Je antwoordt anoniem op je gsm.</p>
+        <ol>${S.questions.map((q, i) => `<li><b>${i + 1}</b><span>${esc(q.lead)}</span></li>`).join("")}</ol>
+      </div>
+      <div class="qr"><img src="${QR}" alt="QR-code naar de poll"><div class="url">${esc(location.host)}/poll</div></div>
+    </section>`,
+  () => `
+    <section>
+      <div class="eyebrow">Vraag 1 van 3 · Vul de zin aan</div>
+      <h2 class="qtext" id="q1t">${esc(S.questions[0].lead)}</h2>
+      <div class="count"><b id="n1">0</b> antwoorden</div>
+      <div class="wall" id="wall"></div>
+    </section>`,
+  () => `
+    <section>
+      <div class="eyebrow">Vraag 2 van 3</div>
+      <h2 class="qtext">${esc(S.questions[1].lead)}</h2>
+      <div class="count"><b id="n2">0</b> antwoorden</div>
+      <div class="bars big" id="bars2">${S.questions[1].options.map((o, i) => barHtml(o, i)).join("")}</div>
+    </section>`,
+  () => `
+    <section>
+      <div class="eyebrow">Vraag 3 van 3 · Meerdere antwoorden mogelijk</div>
+      <h2 class="qtext sm">${esc(S.questions[2].lead)}</h2>
+      <div class="count"><b id="n3">0</b> deelnemers kozen minstens één thema</div>
+      <div class="bars" id="bars3">${S.questions[2].options.map((o, i) => barHtml(o, i)).join("")}</div>
+      <div class="others" id="others3"></div>
+    </section>`,
+  () => `
+    <section>
+      <div class="eyebrow">Overzicht</div>
+      <h2 class="qtext">Bedankt voor jullie antwoorden</h2>
+      <div class="summary" id="summary"></div>
+    </section>`,
+];
+
+// verklein de kaartjes tot alle antwoorden op het scherm passen
+function fitWall(wall) {
+  let size = 1.45;
+  wall.style.setProperty("--cs", size + "rem");
+  while ((wall.scrollHeight > wall.clientHeight + 2 || wall.scrollWidth > wall.clientWidth + 2) && size > 0.7) {
+    size -= 0.05;
+    wall.style.setProperty("--cs", size.toFixed(2) + "rem");
+  }
+}
+
+function barHtml(label, i) {
+  return `<div class="bar" data-i="${i}"><span class="lbl">${esc(label)}</span><span class="track"><span class="fill"></span></span><span class="val num">0<small>0%</small></span></div>`;
+}
+
+function setBars(el, counts, denom) {
+  const max = Math.max(...counts);
+  el.querySelectorAll(".bar").forEach((b) => {
+    const i = Number(b.dataset.i), n = counts[i];
+    b.querySelector(".fill").style.width = (denom ? (n / denom) * 100 : 0) + "%";
+    b.querySelector(".val").innerHTML = `${n}<small>${pct(n, denom)}%</small>`;
+    b.classList.toggle("top", n > 0 && n === max && el.id === "bars3");
+  });
+}
+
+const updates = [
+  null,
+  () => {
+    const r = S.results;
+    $("#n1").textContent = r.texts.filter((t) => !t.hidden).length;
+    const wall = $("#wall");
+    const want = new Map(r.texts.map((t) => [t.id, t]));
+    [...wall.children].forEach((c) => { if (!want.has(c.dataset.id)) c.remove(); });
+    r.texts.forEach((t) => {
+      let c = wall.querySelector(`[data-id="${t.id}"]`);
+      if (!c) { c = document.createElement("div"); c.className = "card"; c.dataset.id = t.id; wall.prepend(c); }
+      if (c.textContent !== t.text) c.textContent = t.text;
+      c.classList.toggle("hid", t.hidden);
+    });
+    wall.classList.toggle("many", r.texts.length > 18);
+    $("#q1t").classList.toggle("sm", r.texts.length > 12);
+    fitWall(wall);
+    if (!r.texts.length && !wall.querySelector(".empty")) wall.innerHTML = `<p class="empty">De eerste antwoorden verschijnen hier zodra iemand iets instuurt.</p>`;
+    else if (r.texts.length) wall.querySelector(".empty")?.remove();
+  },
+  () => { $("#n2").textContent = S.results.singleN; requestAnimationFrame(() => setBars($("#bars2"), S.results.single, S.results.singleN)); },
+  () => {
+    $("#n3").textContent = S.results.multiN;
+    requestAnimationFrame(() => setBars($("#bars3"), S.results.multi, S.results.multiN));
+    const o = S.results.others;
+    $("#others3").innerHTML = o.length ? `<b>Andere:</b>${o.map((t) => `<span>${esc(t)}</span>`).join("")}` : "";
+  },
+  () => {
+    const r = S.results, q = S.questions;
+    const texts = r.texts.filter((t) => !t.hidden);
+    const top = q[2].options.map((o, i) => ({ o, n: r.multi[i] })).sort((a, b) => b.n - a.n).slice(0, 4);
+    $("#summary").innerHTML = `
+      <div class="panel">
+        <span class="eyebrow">${texts.length} antwoorden</span>
+        <h3>${esc(q[0].lead)}</h3>
+        <ul id="sumq">${texts.slice().reverse().map((t) => `<li class="quote">${esc(t.text)}</li>`).join("") || `<li>Nog geen antwoorden.</li>`}</ul>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">${r.singleN} antwoorden</span>
+        <h3>${esc(q[1].lead)}</h3>
+        <ul>${q[1].options.map((o, i) => `<li class="srow"><span>${esc(o)}</span><b class="num">${pct(r.single[i], r.singleN)}%</b><span class="t"><i style="width:${pct(r.single[i], r.singleN)}%"></i></span></li>`).join("")}</ul>
+      </div>
+      <div class="panel">
+        <span class="eyebrow">Top ${top.length} thema’s</span>
+        <h3>${esc(q[2].lead)}</h3>
+        <ul>${top.map((t) => `<li class="srow"><span>${esc(t.o)}</span><b class="num">${t.n}</b><span class="t"><i style="width:${pct(t.n, r.multiN)}%"></i></span></li>`).join("")}</ul>
+      </div>`;
+    const ul = $("#sumq"), panel = ul && ul.closest(".panel");
+    while (panel && ul.children.length > 1 && panel.scrollHeight > panel.clientHeight + 2) ul.lastElementChild.remove();
+  },
+];
+</script>
+</body>
+</html>

@@ -335,6 +335,9 @@ io.on("connection", (socket) => {
   });
 });
 
+// gastenpoll op /poll en /poll/host
+require("./poll")(app, io, HOST_KEY);
+
 server.listen(PORT, () => {
   console.log(`De Slimste Gast draait op poort ${PORT}`);
   console.log(`Host: /host  (sleutel: ${HOST_KEY === "limburg" ? "limburg — wijzig via HOST_KEY" : "ingesteld via HOST_KEY"})`);

@@ -28,6 +28,18 @@ Gasten scannen een QR-code, geven hun naam in en antwoorden op hun gsm. Jij toon
 - Wie zijn gsm vergrendelt of de pagina herlaadt, speelt gewoon verder met dezelfde naam.
 - Herstart of update de server niet tijdens de quiz: de stand zit in het geheugen.
 
+## Gastenpoll
+
+Op dezelfde server draait ook een poll met drie vragen. Je hoeft niets extra online te zetten.
+
+- **Deelnemers:** `https://<jouw-adres>/poll` (de QR-code staat op het presentatiescherm)
+- **Presentator:** `https://<jouw-adres>/poll/host` (zelfde sleutel als de quiz)
+- **Bediening:** pijltje rechts of spatie = volgende scherm, pijltje links = vorige. Wachtscherm → vraag 1 → vraag 2 → vraag 3 → overzicht.
+- **Live resultaten:** antwoorden op vraag 1 verschijnen als kaartjes, vraag 2 en 3 als balken. Deelnemers kunnen hun antwoord wijzigen zolang de vraag op het scherm staat.
+- **Ongepast antwoord?** Beweeg de muis en klik op het kaartje om het te verbergen. Nog eens klikken toont het opnieuw.
+- **Resultaten bewaren:** klik op *Exporteer (CSV)* vóór je de server stopt. Het bestand opent in Excel, met één rij per deelnemer.
+- De vragen pas je aan bovenaan in `poll.js`.
+
 ## Aanpassen
 
 - **Vragen, antwoorden en weetjes:** `questions.js`. Na een wijziging op GitHub zet Render de nieuwe versie automatisch online.

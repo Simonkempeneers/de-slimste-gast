@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d3736">
+<title>Gastenpoll</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=PT+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="/style.css">
+<style>
+  /* Pollscherm gsm: zandkleurig blad, bronsgroene kop, grote tikvlakken */
+  body { background: var(--zand); color: var(--brons); font-size: 16px; }
+  .wrap { min-height: 100%; display: flex; flex-direction: column; }
+  header { background: var(--brons); color: var(--zand); padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px; display: flex; align-items: center; gap: 12px; }
+  header .swatches { width: 30px; flex: none; }
+  header b { font-weight: 900; text-transform: uppercase; letter-spacing: .03em; font-size: 15px; }
+  header .step { margin-left: auto; font-size: 13px; color: var(--mist); }
+  main { flex: 1; padding: 22px 16px calc(env(safe-area-inset-bottom, 0px) + 24px); display: flex; flex-direction: column; max-width: 560px; width: 100%; margin: 0 auto; }
+  section { display: flex; flex-direction: column; gap: 16px; flex: 1; animation: in .35s ease both; }
+  @keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  h2 { font-size: 25px; line-height: 1.18; font-weight: 800; margin: 0; text-wrap: balance; }
+  p { margin: 0; line-height: 1.45; }
+  .eyebrow { color: var(--groen); font-size: 12px; }
+  .muted { color: var(--blauw); font-size: 15px; }
+  textarea { font: inherit; font-size: 19px; font-weight: 600; line-height: 1.35; padding: 14px; border: 2px solid var(--brons); background: var(--wit); color: var(--brons); width: 100%; min-height: 130px; resize: vertical; border-radius: 0; }
+  .counter { font-size: 13px; color: var(--blauw); text-align: right; margin-top: -8px; }
+  .btn { border: 0; background: var(--brons); color: var(--zand); padding: 18px; font-size: 18px; font-weight: 800; width: 100%; }
+  .btn.alt { background: transparent; color: var(--brons); box-shadow: inset 0 0 0 2px var(--brons); }
+  .btn:disabled { opacity: .45; }
+  .bottom { margin-top: auto; display: grid; gap: 10px; }
+
+  .choices { display: grid; gap: 10px; }
+  .choice { border: 0; text-align: left; background: var(--wit); color: var(--brons); padding: 16px; min-height: 62px; display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: center; font-size: 18px; font-weight: 700; line-height: 1.25; box-shadow: inset 0 0 0 2px var(--kalk); transition: background .15s, color .15s; }
+  .choice .box { width: 30px; height: 30px; display: grid; place-items: center; box-shadow: inset 0 0 0 2px var(--brons); font-size: 18px; font-weight: 900; }
+  .choice.radio .box { border-radius: 50%; }
+  .choice[aria-pressed="true"] { background: var(--groen); color: var(--wit); box-shadow: none; }
+  .choice[aria-pressed="true"] .box { background: var(--wit); color: var(--groen); box-shadow: none; }
+  .big .choice { min-height: 84px; font-size: 24px; }
+
+  .thanks { background: var(--groen); color: var(--wit); padding: 18px; display: grid; gap: 6px; }
+  .thanks b { font-size: 22px; }
+  .quote { background: var(--wit); padding: 14px; font-size: 18px; font-weight: 600; border-left: 4px solid var(--groen); }
+  .other-in { font: inherit; font-size: 18px; font-weight: 600; padding: 14px; border: 2px solid var(--groen); background: var(--wit); color: var(--brons); width: 100%; border-radius: 0; margin-top: -4px; }
+  .saved { font-size: 14px; font-weight: 700; color: var(--groen); min-height: 1.3em; }
+  .wait { margin: auto 0; text-align: center; display: grid; gap: 14px; justify-items: center; }
+  .wait .swatches { width: 120px; animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: .55; } }
+  .net { position: fixed; left: 0; right: 0; bottom: 0; background: var(--rood); color: var(--wit); text-align: center; padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 10px); font-weight: 700; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="swatches" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <b>Gastenpoll</b>
+    <span class="step" id="step"></span>
+  </header>
+  <main id="main"></main>
+</div>
+<div class="net" id="net" hidden>Verbinding kwijt. Opnieuw verbinden…</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const SW = `<div class="swatches" aria-hidden="true">${"<i></i>".repeat(12)}</div>`;
+const socket = io("/poll");
+let S = null, shown = -1, editing = false;
+
+const store = {
+  get() { try { return localStorage.getItem("dsg-poll") || ""; } catch { return ""; } },
+  set(v) { try { localStorage.setItem("dsg-poll", v); } catch {} },
+};
+
+socket.on("connect", () => {
+  $("#net").hidden = true;
+  socket.emit("join", store.get(), (r) => { if (r && r.id) store.set(r.id); });
+});
+socket.on("disconnect", () => { $("#net").hidden = false; });
+socket.on("pstate", (s) => {
+  const first = !S;
+  S = s;
+  // enkel opnieuw opbouwen als de vraag wisselt, zodat typen niet onderbroken wordt
+  if (first || s.step !== shown) { shown = s.step; editing = false; render(); }
+});
+
+function send(q, value) { socket.emit("answer", { q, value }); }
+
+function render() {
+  $("#step").textContent = S.step >= 1 && S.step <= 3 ? `Vraag ${S.step} van 3` : "";
+  $("#main").innerHTML = views[S.step]();
+  binds[S.step] && binds[S.step]();
+}
+
+const views = [
+  () => `<section><div class="wait">${SW}<h2>Welkom!</h2><p class="muted">De poll start zo meteen. Houd het grote scherm in de gaten.</p></div></section>`,
+  () => {
+    const q = S.questions[0], mine = S.mine.q1;
+    if (mine && !editing) return `
+      <section>
+        <div class="eyebrow">Vul de zin aan</div>
+        <h2>${esc(q.lead)}</h2>
+        <p class="quote">${esc(mine)}</p>
+        <div class="thanks"><b>Bedankt!</b><span>Je antwoord staat op het grote scherm.</span></div>
+        <div class="bottom"><button class="btn alt" id="edit" type="button">Wijzig mijn antwoord</button></div>
+      </section>`;
+    return `
+      <section>
+        <div class="eyebrow">Vul de zin aan</div>
+        <h2>${esc(q.lead)}</h2>
+        <form id="f1" class="bottom" style="margin-top:0">
+          <label for="t1" class="muted">Jouw antwoord, kort en krachtig</label>
+          <textarea id="t1" maxlength="${q.max}" enterkeyhint="send" placeholder="bv. onze website vernieuwen">${esc(mine || "")}</textarea>
+          <div class="counter"><span id="c1">${(mine || "").length}</span> / ${q.max}</div>
+          <button class="btn" type="submit" id="s1">Verstuur</button>
+        </form>
+      </section>`;
+  },
+  () => {
+    const q = S.questions[1];
+    return `
+      <section>
+        <div class="eyebrow">Vul de zin aan</div>
+        <h2>${esc(q.lead)}</h2>
+        <div class="choices big">${q.options.map((o, i) => `
+          <button class="choice radio" type="button" data-i="${i}" aria-pressed="${S.mine.q2 === i}"><span class="box">${S.mine.q2 === i ? "●" : ""}</span><span>${esc(o)}</span></button>`).join("")}
+        </div>
+        <p class="saved" id="saved">${S.mine.q2 != null ? "Opgeslagen. Je kunt je keuze nog wijzigen." : ""}</p>
+      </section>`;
+  },
+  () => {
+    const q = S.questions[2], mine = new Set(S.mine.q3);
+    return `
+      <section>
+        <div class="eyebrow">Vul de zin aan · meerdere antwoorden mogelijk</div>
+        <h2>${esc(q.lead)}</h2>
+        <div class="choices">${q.options.map((o, i) => `
+          <button class="choice" type="button" data-i="${i}" aria-pressed="${mine.has(i)}"><span class="box">${mine.has(i) ? "✓" : ""}</span><span>${i === q.other ? "Andere, namelijk…" : esc(o)}</span></button>
+          ${i === q.other ? `<input class="other-in" id="other" type="text" maxlength="${q.otherMax}" placeholder="Typ hier je thema" value="${esc(S.mine.q3other || "")}" ${mine.has(i) ? "" : "hidden"} enterkeyhint="done">` : ""}`).join("")}
+        </div>
+        <p class="saved" id="saved">${mine.size ? "Opgeslagen. Je kunt je keuzes nog wijzigen." : "Tik op alles wat je interesseert."}</p>
+      </section>`;
+  },
+  () => `<section><div class="wait">${SW}<h2>Bedankt en tot binnenkort in Limburg.</h2></div></section>`,
+];
+
+function sendQ3() { socket.emit("answer", { q: "q3", value: S.mine.q3, other: S.mine.q3other || "" }); }
+let otherT;
+
+const binds = [
+  null,
+  () => {
+    const edit = $("#edit");
+    if (edit) { edit.addEventListener("click", () => { editing = true; render(); $("#t1").focus(); }); return; }
+    const t = $("#t1");
+    t.addEventListener("input", () => { $("#c1").textContent = t.value.length; });
+    t.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#f1").requestSubmit(); } });
+    $("#f1").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = t.value.replace(/\s+/g, " ").trim();
+      if (!v) { t.focus(); return; }
+      send("q1", v);
+      S.mine.q1 = v; editing = false; render();
+    });
+  },
+  () => {
+    document.querySelectorAll(".choice").forEach((b) => b.addEventListener("click", () => {
+      const i = Number(b.dataset.i);
+      S.mine.q2 = i;
+      send("q2", i);
+      document.querySelectorAll(".choice").forEach((c) => {
+        const on = Number(c.dataset.i) === i;
+        c.setAttribute("aria-pressed", on); c.querySelector(".box").textContent = on ? "●" : "";
+      });
+      $("#saved").textContent = "Opgeslagen. Je kunt je keuze nog wijzigen.";
+    }));
+  },
+  () => {
+    document.querySelectorAll(".choice").forEach((b) => b.addEventListener("click", () => {
+      const i = Number(b.dataset.i);
+      const set = new Set(S.mine.q3);
+      set.has(i) ? set.delete(i) : set.add(i);
+      S.mine.q3 = [...set];
+      sendQ3();
+      const on = set.has(i);
+      if (i === S.questions[2].other) { const o = $("#other"); o.hidden = !on; if (on) o.focus(); }
+      b.setAttribute("aria-pressed", on); b.querySelector(".box").textContent = on ? "✓" : "";
+      $("#saved").textContent = set.size ? "Opgeslagen. Je kunt je keuzes nog wijzigen." : "Tik op alles wat je interesseert.";
+    }));
+    const o = $("#other");
+    o.addEventListener("input", () => {
+      S.mine.q3other = o.value;
+      clearTimeout(otherT);
+      otherT = setTimeout(() => { sendQ3(); $("#saved").textContent = "Opgeslagen. Je kunt je keuzes nog wijzigen."; }, 500);
+    });
+    o.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); o.blur(); } });
+    o.addEventListener("blur", () => { clearTimeout(otherT); sendQ3(); });
+  },
+];
+</script>
+</body>
+</html>
